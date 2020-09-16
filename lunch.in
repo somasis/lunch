@@ -1,0 +1,183 @@
+#!/bin/sh
+# lunch - xdg-open(1) replacement using {protocol,MIME,extension}-based configuration
+
+set -u
+
+: "${XDG_CONFIG_HOME:=~/.config}"
+
+call() {
+    "$@"
+}
+
+warn() {
+    printf 'warning: %s\n' "$@" >&2
+}
+
+die() {
+    errno="$1"; shift
+    [ $# -gt 0 ] && printf 'dying: %s\n' "$@" >&2
+    exit "${errno}"
+}
+
+call_nohup() {
+    nohup -- "$@" >/dev/null 2>&1
+}
+
+# shellcheck disable=SC2046,SC2059,SC2086
+run() {
+    value="$1"; shift
+    case "${value}" in
+        *'%s'*'&') call_nohup $(printf "${value% &}" "$@") & ;;
+        *'&') call_nohup "${value% &}" "$@" & ;;
+        *'%s'*) call $(printf "${value}" "$@") ;;
+        *) call ${value} "$@" ;;
+    esac
+}
+
+extension() {
+    while [ $# -gt 0 ]; do
+        extension=$(printf '%s\n' "$1" | sed -E 's/^.*\.//; s/./\L&/g')
+
+        if [ -f "${XDG_CONFIG_HOME}/lunch/extension/${extension}" ]; then
+            run "$(cat "${XDG_CONFIG_HOME}/lunch/extension/${extension}")" "$1"
+        else
+            warn "no handler for '${extension}' extension used in '${1}'"
+            return 1
+        fi
+
+        shift
+    done
+}
+
+protocol() {
+    while [ $# -gt 0 ]; do
+        # Ensure all protocols are lowercase.
+        protocol=$(printf '%s\n' "$1" | sed 's#:.*##; s/\./\L&/')
+
+        if [ -f "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}" ]; then
+            run "$(cat "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}")" "$1"
+        else
+            warn "no handler for '${protocol}' protocol used in '${1}'"
+            return 1
+        fi
+        shift
+    done
+}
+
+mime() {
+    while [ $# -gt 0 ]; do
+        # This check is needed because otherwise file(1), according to POSIX, just reports
+        # filesystem errors on stdout(!) rather than failing
+        [ -e "$1" ] || die 2 "file '$1' does not exist" # ENOENT
+
+        # -i for printing mimetype only
+        # -L for following symlinks
+        #       POSIXLY_CORRECT was once used here for same effect, but that is,
+        #       ironically enough, not portable across file(1) implementations.
+        #       POSIX file doesn't specify -L, but it is used across both OpenBSD's
+        #       file(1) implementation, and Ian Darwin's file(1) (the most common).
+        mime=$(file -iL "$1" 2>/dev/null | sed 's/.*: *//; s/; .*//')
+        parent="${mime%%/*}"
+        child="${mime#*/}"
+
+        if [ -f "${XDG_CONFIG_HOME}/lunch/mime/${parent}/${child}" ]; then
+            run "$(cat "${XDG_CONFIG_HOME}/lunch/mime/${parent}/${child}")" "$1"
+        elif [ -f "${XDG_CONFIG_HOME}/lunch/mime/${parent}" ]; then
+            run "$(cat "${XDG_CONFIG_HOME}/lunch/mime/${parent}")" "$1"
+        else
+            warn "no handler for '${mime}' MIME type used in '${1}'"
+            return 1
+        fi
+        shift
+    done
+}
+
+usage() {
+    cat >&2 <<EOF
+usage: ${0##*/} [-ls]
+       ${0##*/} [-g PREFERENCE] [-o PREFERENCE] [ARGUMENTS...]
+       ${0##*/} FILE...
+       ${0##*/} URL...
+EOF
+    die 64 # EX_USAGE
+}
+
+# List preferences.
+prefs() (
+    cd "${XDG_CONFIG_HOME}"/lunch || die 66 "configuration directory does not exist"
+    find ./ -maxdepth 1 -not -type d | sed 's|.\/||' | tr '[:upper:]' '[:lower:]' \
+        | sort -ud \
+        || die 66 "failed to get list of preferences" # EX_NOINPUT
+)
+
+# Print the contents of a preference.
+pref() {
+    cat "${XDG_CONFIG_HOME}"/lunch/"$(printf '%s' "${1}" | tr '[:lower:]' '[:upper:]')" \
+        || die 69 "preference '${1}' does not exist" # EX_UNAVAILABLE
+}
+
+# Properly format a preference.
+replace() {
+    replace="$1"
+    shift
+    # shellcheck disable=SC2046,SC2059,SC2086
+    #       SC2046: don't complain about word splitting, we want that
+    #       SC2059: don't complain about using variables in printf, we want that!
+    #       SC2086: don't complain about word splitting on the catchall
+    case "${replace}" in
+        *'%s'*'&') printf -- "${replace%% &}\n" "$@" ;;
+        *'%s'*) printf -- "${replace} %s\n" "$@" ;;
+        *'&') printf -- "%s %s &\n" "${replace%% &}" "$@" ;;
+        *) printf -- "%s %s\n" "${replace}" "$@" ;;
+    esac
+}
+
+while getopts :g:lo:s arg >/dev/null 2>&1; do
+    case "${arg}" in
+        g)
+            shift $(( OPTIND - 1 ))
+            replace "$(pref "${OPTARG}")" "$@"
+            exit
+            ;;
+        l)
+            prefs
+            exit
+            ;;
+        o)
+            shift $(( OPTIND - 1 ))
+            run "$(pref "${OPTARG}")" "$@" || exit 1
+            ;;
+        s)
+            for f in $(prefs); do
+                printf 'export %s="%s -o %s"\n' \
+                    "$(printf '%s\n' "${f}" | tr '[:lower:]' '[:upper:]')" \
+                    "${0##*/}" \
+                    "${f}"
+            done
+            exit
+            ;;
+        ?)
+            usage
+            ;;
+    esac
+done
+shift $(( OPTIND - 1 ))
+
+[ "$#" -eq 0 ] && usage
+
+while [ $# -gt 0 ]; do
+    [ -d "$1" ] && mime "$1" && shift && continue
+    case "$1" in
+        mailto:*|*://*)
+            protocol "$1" && shift && continue
+            ;;
+        *.*)
+            extension "$1" && shift && continue
+            ;;
+        *)
+            mime "$1" && shift && continue
+            ;;
+    esac
+
+    die 95 "not sure how to handle '${1}'" # ENOTSUP
+done

@@ -1,0 +1,65 @@
+.Dd September 17, 2020
+.Dt TERMINAL 1
+.Os
+.
+.Sh NAME
+.Nm terminal
+.Nd run a command in the terminal emulator of the user's preference
+.
+.Sh SYNOPSIS
+.Nm
+.Op Fl c | e | x | -command | -
+.Op Ar COMMAND...
+.
+.Sh DESCRIPTION
+.Nm
+runs a command within the terminal emulator preferred by the user.
+It does this by using the
+.Dq Em terminal
+preference that
+.Xr lunch 1
+is configured with.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl c | e | x | -command | -
+If any of these appear as the first argument, they are ignored.
+They are provided strictly for compatibility reasons, as they are
+common options passed to terminal emulators.
+.It Op Ar COMMAND...
+The command that will be ran in the terminal emulator.
+If no command is given, then the terminal emulator will be ran, with
+the
+.Dq Em terminal
+preference stripped down to the executable name.
+.El
+.Sh NOTES
+.Ss Replacing Xr xterm 1
+.Xr xterm 1
+is often considered the
+.Dq standard
+terminal emulator on Xorg-based desktops in terms of command line usage.
+.Pp
+If you don't actually wish to use
+.Xr xterm 1
+itself, you can create a symbolic link and
+.Nm
+will roughly emulate it.
+Most terminal emulators base their options on
+.Xr xterm 1
+.Ap s
+options, most notably the
+.Fl e
+option, and so you can easily get away with using
+.Nm
+as a drop-in replacement for it:
+.Bd -ragged -offset indent
+ln -s
+.Pa terminal
+.Pa /usr/bin/xterm
+.Ed
+.Sh SEE ALSO
+.Xr lunch 1 ,
+.Xr xterm 1
+.Sh AUTHORS
+.An Kylie McClain Aq Mt kylie@somas.is

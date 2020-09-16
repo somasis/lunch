@@ -1,0 +1,118 @@
+.Dd September 17, 2020
+.Dt LUNCH 1
+.Os
+.
+.Sh NAME
+.Nm lunch
+.Nd open a file or URL with a user's preferred application
+.
+.Sh SYNOPSIS
+.Nm open
+.Op Fl el
+.Op Fl g Ar PREFERENCE
+.Op Fl o Ar PREFERENCE
+.Nm
+.Ar FILE... | URL...
+.
+.Sh DESCRIPTION
+.Nm
+opens files and URLs according to the user's preferences for the what
+should open the given file type or URL type.
+It aims to provide a way of setting a user's preferred applications that works
+.Em with
+common environment variables such as
+.Em BROWSER , PAGER
+and so on, rather than as a second system on top of these common
+mechanisms for declaring preferences.
+Configuration is laid out in a simple and easily understood manner, as
+an explicit goal.
+.Pp
+It is designed to be an alternative to
+.Xr xdg-open 1 ,
+and it aims to allow for more fine-grained control than it provides.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl l
+List the preferences known by
+.Nm .
+.It Fl s
+Print a
+.Xr sh 1
+script for exporting all preferences as environment variables.
+.Bd -literal -offset indent
+$ lunch -s
+export BROWSER="lunch -o browser"
+export EDITOR="lunch -o editor"
+export PAGER="lunch -o pager"
+export TERMINAL="lunch -o terminal"
+.Ed
+.It Fl g Ar PREFERENCE
+Get the command corresponding to the
+.Ar PREFERENCE
+in question.
+.It Fl o Ar PREFERENCE
+Open the application corresponding to the
+.Ar PREFERENCE
+in question.
+.It Pa FILE...
+The file to be opened.
+.Pp
+To determine what should be used to open the file,
+.Nm
+works in the following order:
+.Bl -enum
+.It
+The extension of the file is checked against any extension-based rules.
+If any match, that rule is used.
+See
+.Sx Rules
+for details.
+.It
+The MIME type of the file is checked, using
+.Xr file 1 .
+If it matches any MIME-based rules (again, see
+.Sx Rules ) ,
+it will use that rule.
+.El
+.It Pa URL...
+The URL to be opened.
+To determine what should be used to open the file,
+.Nm
+checks against protocol-based rules (see
+.Sx Rules ) .
+.El
+.Ss Rules
+In
+.Nm ,
+rules are the most important part of configuration.
+Rules determine what extensions, MIME types, protocols, etc. are
+opened are opened by what programs.
+.Pp
+In an attempt to simplify configuration and allow for more flexibility
+and delegation to preferences that can handle many types of input,
+.Nm
+is configured through a directory and file structure, rather than a
+single configuration file.
+.Pp
+TODO
+.Sh ENVIRONMENT
+.Bl -tag -width 10n
+.It Ev BROWSER
+The default web browser.
+.It Ev EDITOR
+The default text editor.
+.It Ev PAGER
+The default text pager.
+.El
+.Sh SEE ALSO
+.Xr terminal 1 ,
+.Xr xdg-open 1
+.Rs
+.%A Daniel Bernstein
+.%T The envdir program
+.%D March 05, 2000
+.%U https://cr.yp.to/daemontools/envdir.html
+.Re
+.Sh AUTHORS
+.An Kylie McClain Aq Mt kylie@somas.is

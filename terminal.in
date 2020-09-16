@@ -1,0 +1,19 @@
+#!/bin/sh
+# terminal - launcher for user's preferred terminal emulator
+
+set -u
+
+case "${1:-}" in
+    -c|-e|-x|--command|--)
+        shift
+        ;;
+esac
+
+[ -t 0 ] && exec "$@"
+if [ $# -eq 0 ]; then
+    exec "$(lunch -g terminal | cut -d' ' -f1)"
+else
+    # HACK: I've not really figured out why this is needed to make some invocations start the
+    #       terminal properly...
+    exec lunch -o terminal ${@:+"$@"}
+fi
