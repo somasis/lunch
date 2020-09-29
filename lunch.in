@@ -10,12 +10,12 @@ call() {
 }
 
 warn() {
-    printf 'warning: %s\n' "$@" >&2
+    printf -- 'warning: %s\n' "$@" >&2
 }
 
 die() {
     errno="$1"; shift
-    [ $# -gt 0 ] && printf 'dying: %s\n' "$@" >&2
+    [ $# -gt 0 ] && printf -- 'dying: %s\n' "$@" >&2
     exit "${errno}"
 }
 
@@ -27,16 +27,16 @@ call_nohup() {
 run() {
     value="$1"; shift
     case "${value}" in
-        *'%s'*'&') call_nohup $(printf "${value% &}" "$@") & ;;
+        *'%s'*'&') call_nohup $(printf -- "${value% &}" "$@") & ;;
         *'&') call_nohup "${value% &}" "$@" & ;;
-        *'%s'*) call $(printf "${value}" "$@") ;;
+        *'%s'*) call $(printf -- "${value}" "$@") ;;
         *) call ${value} "$@" ;;
     esac
 }
 
 extension() {
     while [ $# -gt 0 ]; do
-        extension=$(printf '%s\n' "$1" | sed -E 's/^.*\.//; s/./\L&/g')
+        extension=$(printf -- '%s\n' "$1" | sed -E 's/^.*\.//; s/./\L&/g')
 
         if [ -f "${XDG_CONFIG_HOME}/lunch/extension/${extension}" ]; then
             run "$(cat "${XDG_CONFIG_HOME}/lunch/extension/${extension}")" "$1"
@@ -52,7 +52,7 @@ extension() {
 protocol() {
     while [ $# -gt 0 ]; do
         # Ensure all protocols are lowercase.
-        protocol=$(printf '%s\n' "$1" | sed 's#:.*##; s/\./\L&/')
+        protocol=$(printf -- '%s\n' "$1" | sed 's#:.*##; s/\./\L&/')
 
         if [ -f "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}" ]; then
             run "$(cat "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}")" "$1"
@@ -112,7 +112,7 @@ prefs() (
 
 # Print the contents of a preference.
 pref() {
-    cat "${XDG_CONFIG_HOME}"/lunch/"$(printf '%s' "${1}" | tr '[:lower:]' '[:upper:]')" \
+    cat "${XDG_CONFIG_HOME}"/lunch/"$(printf -- '%s' "${1}" | tr '[:lower:]' '[:upper:]')" \
         || die 69 "preference '${1}' does not exist" # EX_UNAVAILABLE
 }
 
@@ -127,7 +127,7 @@ replace() {
     case "${replace}" in
         *'%s'*'&') printf -- "${replace%% &}\n" "$@" ;;
         *'%s'*) printf -- "${replace} %s\n" "$@" ;;
-        *'&') printf -- "%s %s &\n" "${replace%% &}" "$@" ;;
+        *'&') printf -- "${replace%% &} %s &\n" "$@" ;;
         *) printf -- "%s %s\n" "${replace}" "$@" ;;
     esac
 }
@@ -150,8 +150,8 @@ while getopts :g:lo:s arg >/dev/null 2>&1; do
             ;;
         s)
             for f in $(prefs); do
-                printf 'export %s="%s -o %s"\n' \
-                    "$(printf '%s\n' "${f}" | tr '[:lower:]' '[:upper:]')" \
+                printf -- 'export %s="%s -o %s"\n' \
+                    "$(printf -- '%s\n' "${f}" | tr '[:lower:]' '[:upper:]')" \
                     "${0##*/}" \
                     "${f}"
             done
