@@ -5,10 +5,6 @@ set -u
 
 : "${XDG_CONFIG_HOME:=~/.config}"
 
-call() {
-    "$@"
-}
-
 warn() {
     printf -- 'warning: %s\n' "$@" >&2
 }
@@ -23,14 +19,14 @@ call_nohup() {
     nohup -- "$@" >/dev/null 2>&1
 }
 
-# shellcheck disable=SC2046,SC2059,SC2086
+# shellcheck disable=SC2046,SC2059,SC2091
 run() {
     value="$1"; shift
     case "${value}" in
         *'%s'*'&') call_nohup $(printf -- "${value% &}" "$@") & ;;
         *'&') call_nohup "${value% &}" "$@" & ;;
-        *'%s'*) call $(printf -- "${value}" "$@") ;;
-        *) call ${value} "$@" ;;
+        *'%s'*) $(printf -- "${value}" "$@") ;;
+        *) ${value} "$@" ;;
     esac
 }
 
