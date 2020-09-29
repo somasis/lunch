@@ -3,7 +3,7 @@
 
 set -u
 
-: "${XDG_CONFIG_HOME:=~/.config}"
+: "${XDG_CONFIG_HOME:=${HOME}/.config}"
 
 warn() {
     printf -- 'warning: %s\n' "$@" >&2
