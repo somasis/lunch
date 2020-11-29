@@ -8,7 +8,6 @@ mandir ?= ${datadir}/man
 man1dir ?= ${mandir}/man1
 
 SHELLCHECK ?= shellcheck
-SHELLSPEC ?= shellspec
 MANDOC ?= mandoc
 
 -include config.mk
@@ -20,7 +19,7 @@ BINS = \
 MAN1 = ${BINS:=.1}
 MANS = ${MAN1}
 
-dev: FRC all lint check
+dev: FRC all lint
 all: FRC ${BINS} ${MANS}
 
 bin: FRC ${BINS}
@@ -66,8 +65,5 @@ clean: FRC
 lint: FRC ${BINS}
 	${SHELLCHECK} ${BINS}
 	${MANDOC} -T lint ${MANS}
-
-check: FRC ${BINS}
-	${SHELLSPEC} ${SHELLSPEC_FLAGS}
 
 FRC:
