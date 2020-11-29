@@ -19,7 +19,7 @@ BINS = \
 MAN1 = ${BINS:=.1}
 MANS = ${MAN1}
 
-dev: FRC all lint
+dev: FRC README all lint
 all: FRC ${BINS} ${MANS}
 
 bin: FRC ${BINS}
@@ -58,6 +58,9 @@ install: FRC all
 
 	for bin in ${BINS}; do install -m0755 $${bin} ${DESTDIR}${bindir}; done
 	for man1 in ${MAN1}; do install -m0644 $${man1} ${DESTDIR}${man1dir}; done
+
+README: lunch.1
+	man ./$< | col -xb > $@
 
 clean: FRC
 	rm -f ${BINS}
