@@ -126,7 +126,7 @@ replace() {
         *'%s'*) printf -- "${replace} %s\n" "$@" ;;
         *'&') printf -- "${replace%% &} %s &\n" "$@" ;;
         *) printf -- "%s %s\n" "${replace}" "$@" ;;
-    esac
+    esac | sed 's/ *$//'
 }
 
 while getopts :g:lo:s arg >/dev/null 2>&1; do
