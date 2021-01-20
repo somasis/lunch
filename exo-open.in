@@ -1,0 +1,53 @@
+#!/bin/sh
+# exo-open - wrapper for lunch(1) that provides exo-open(1)-style usage
+
+usage() {
+    [ -n "$1" ] && printf 'error: %s\n' "$1" >&1
+    cat >&2 <<EOF
+usage:
+       ${0##*/} FILE... | URL...
+       ${0##*/} [--working-directory DIRECTORY] --launch CATEGORY [PARAMETERS...]
+EOF
+    exit ${2:-64} # EX_USAGE
+}
+
+set -eu
+
+[ $# -eq 0 ] && usage
+
+category=
+launch_cwd="${PWD}"
+mode=open
+
+while [ $# -ge 0 ]; do
+    case "${1}" in
+        --working-directory)
+            shift
+            launch_cwd="${1}"
+            ;;
+        --launch)
+            mode=launch
+            shift
+            category="${1}"
+            ;;
+        *)
+            usage
+            ;;
+    esac
+    shift
+done
+
+cd "${launch_cwd}"
+[ "${mode}" = open ] && exec lunch -- "$@"
+
+case "${category}" in
+    FileManager)        category="file_manager" ;;
+    MailReader)         category="mail_client" ;;
+    TerminalEmulator)   category="terminal" ;;
+    WebBrowser)         category="browser" ;;
+    *)
+        usage "'${category}' is an invalid category" 22
+        ;;
+esac
+
+exec lunch -o "${category}" "$@"

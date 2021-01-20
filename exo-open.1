@@ -1,0 +1,95 @@
+.Dd January 19, 2021
+.Dt EXO-OPEN 1
+.Os
+.
+.Sh NAME
+.Nm exo-open
+.Nd open a file or URL with a user's preferred application
+.
+.Sh SYNOPSIS
+.Nm
+.Op Fl -working-directory Ar DIRECTORY
+.Ar FILE... | URL...
+.
+.Nm
+.Op Fl -working-directory Ar DIRECTORY
+.Fl -launch Ar CATEGORY
+.Ar PARAMETERS
+.
+.Sh DESCRIPTION
+This version of
+.Nm
+is a wrapper provided by
+.Xr lunch 1 ,
+providing a usage style akin to the Xfce project's own
+.Nm
+implementation.
+.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl -working-directory Ar DIRECTORY
+Change to the
+.Ar DIRECTORY
+given before opening the
+.Ar FILE ,
+.Ar URL ,
+or
+.Ar CATEGORY
+given.
+.
+.It Fl -launch Ar CATEGORY Op Ar PARAMETERS
+Launch the
+.Ar PREFERENCE
+matching
+.Ar CATEGORY
+with any
+.Op Ar PARAMETERS
+given.
+.Ar CATEGORY
+is not the same as the
+.Ar PREFERENCE
+concept used in
+.Xr lunch 1 ,
+and
+.Nm
+only defines a small set of categories.
+.
+.Pp
+Here's how they translate:
+.Bl -column "TerminalEmulator" "TerminalEmulator"
+.It Ar CATEGORY Ta Ar PREFERENCE
+.It FileManager Ta file_manager
+.It MailReader Ta mail_client
+.It TerminalEmulator Ta terminal
+.It WebBrowser Ta browser
+.El
+.
+.It Op Ar FILE... | URL...
+These are passed to
+.Xr lunch 1
+indiscriminately, so see that page for details.
+.
+.El
+.Sh COMPATIBILITY
+The Xfce project's
+.Nm
+specifies in its help text that
+.Fl -working-directory Ar DIRECTORY
+is used to set the
+.Do
+default working directory for applications when using the
+.Fl -launch
+command
+.Dc
+However, it actually functions regardless of if
+.Fl -launch
+is passed or not in the Xfce project's version.
+.
+As such, it was chosen to emulate that behavior regardless of if it's a
+bug or not.
+.
+.Sh SEE ALSO
+.Xr lunch 1
+.Sh AUTHORS
+.An Kylie McClain Aq Mt kylie@somas.is

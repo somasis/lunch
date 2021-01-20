@@ -13,6 +13,7 @@ MANDOC ?= mandoc
 -include config.mk
 
 BINS = \
+    exo-open \
     lunch \
     terminal
 
