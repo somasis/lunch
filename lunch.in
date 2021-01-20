@@ -37,8 +37,9 @@ extension() {
         if [ -f "${XDG_CONFIG_HOME}/lunch/extension/${extension}" ]; then
             run "$(cat "${XDG_CONFIG_HOME}/lunch/extension/${extension}")" "$1"
         else
-            warn "no handler for '${extension}' extension used in '${1}'"
-            return 1
+            unknown_type="extension"
+            unknown_value="${extension}"
+            return 127
         fi
 
         shift
@@ -53,8 +54,9 @@ protocol() {
         if [ -f "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}" ]; then
             run "$(cat "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}")" "$1"
         else
-            warn "no handler for '${protocol}' protocol used in '${1}'"
-            return 1
+            unknown_type="protocol"
+            unknown_value="${protocol}"
+            return 127
         fi
         shift
     done
@@ -81,8 +83,9 @@ mime() {
         elif [ -f "${XDG_CONFIG_HOME}/lunch/mime/${parent}" ]; then
             run "$(cat "${XDG_CONFIG_HOME}/lunch/mime/${parent}")" "$1"
         else
-            warn "no handler for '${mime}' MIME type used in '${1}'"
-            return 1
+            unknown_type="mime"
+            unknown_value="${mime}"
+            return 127
         fi
         shift
     done
@@ -177,5 +180,9 @@ while [ $# -gt 0 ]; do
             ;;
     esac
 
-    die 95 "not sure how to handle '${1}'" # ENOTSUP
+    if [ -x "${XDG_CONFIG_HOME}"/lunch/unknown ] \
+        && ! "${XDG_CONFIG_HOME}"/lunch/unknown "${1}" "${unknown_type}" "${unknown_value}"; then
+        die 95 "not sure how to handle '${1}' (${unknown_type}: '${unknown_value}')" # ENOTSUP
+    fi
+    shift
 done
