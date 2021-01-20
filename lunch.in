@@ -1,5 +1,23 @@
 #!/bin/sh
 # lunch - xdg-open(1) replacement using {protocol,MIME,extension}-based configuration
+#
+# ~/.config
+#     lunch/
+#         extension/
+#             docx -> ../DOCUMENT_EDITOR      # symbolic link to DOCUMENT_EDITOR
+#         mime/
+#             application/
+#                 zip*                        # executable file given file as argment
+#             image -> ../IMAGE_VIEWER        # parent handler for all image/*
+#             text/
+#                 * -> ../../EDITOR           # parent handler for any unspecified text/*
+#                 html -> ../../BROWSER       # handler for text/html
+#         protocol/
+#             http -> ../BROWSER
+#             https -> ../BROWSER
+#             mailto -> ../MAIL_CLIENT
+#             ssh     ("terminal ssh")        # non-excutable text file containing command
+#             steam   ("steam")
 
 set -u
 
