@@ -69,7 +69,7 @@ clean: FRC
 
 lint: FRC ${BINS}
 	${SHELLCHECK} ${BINS}
-	${MANDOC} -T lint ${MANS}
+	${MANDOC} -T lint -W style ${MANS}
 
 install-contrib: FRC
 	install -d \
