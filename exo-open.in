@@ -5,7 +5,7 @@ usage() {
     [ -n "$1" ] && printf 'error: %s\n' "$1" >&1
     cat >&2 <<EOF
 usage:
-       ${0##*/} FILE... | URL...
+       ${0##*/} [--working-directory DIRECTORY] FILE... | URL...
        ${0##*/} [--working-directory DIRECTORY] --launch CATEGORY [PARAMETERS...]
 EOF
     exit ${2:-64} # EX_USAGE
