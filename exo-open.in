@@ -11,7 +11,7 @@ EOF
     exit ${2:-64} # EX_USAGE
 }
 
-set -eu
+set -e
 
 [ $# -eq 0 ] && usage
 
