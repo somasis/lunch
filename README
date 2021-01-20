@@ -76,7 +76,7 @@ ENVIRONMENT
      PAGER       The default text pager.
 
 SEE ALSO
-     terminal(1), xdg-open(1)
+     exo-open(1), terminal(1), xdg-open(1)
 
      Daniel Bernstein, The envdir program,
      https://cr.yp.to/daemontools/envdir.html, March 05, 2000.
@@ -84,4 +84,4 @@ SEE ALSO
 AUTHORS
      Kylie McClain <kylie@somas.is>
 
-Linux 5.4.84-1-lts             January 19, 2021             Linux 5.4.84-1-lts
+Linux 5.4.84-1-lts             January 20, 2021             Linux 5.4.84-1-lts
