@@ -1,0 +1,2 @@
+# Ensure every mimetype uses lunch(1).
+*/*; lunch -- "%s"

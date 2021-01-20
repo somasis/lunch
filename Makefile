@@ -6,6 +6,7 @@ bindir ?= ${prefix}/bin
 datadir ?= ${prefix}/share
 mandir ?= ${datadir}/man
 man1dir ?= ${mandir}/man1
+sysconfdir ?= ${prefix}/etc
 
 SHELLCHECK ?= shellcheck
 MANDOC ?= mandoc
@@ -69,5 +70,13 @@ clean: FRC
 lint: FRC ${BINS}
 	${SHELLCHECK} ${BINS}
 	${MANDOC} -T lint ${MANS}
+
+install-contrib: FRC
+	install -d \
+	    ${DESTDIR}${datadir}/applications \
+	    ${DESTDIR}${sysconfdir}
+
+	install -m0644 contrib/lunch.desktop ${DESTDIR}${datadir}/applications
+	install -m0644 contrib/mailcap ${DESTDIR}${sysconfdir}/mailcap
 
 FRC:
