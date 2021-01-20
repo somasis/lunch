@@ -30,12 +30,19 @@ run() {
     esac
 }
 
+handled=false
+
 extension() {
     while [ $# -gt 0 ]; do
         extension=$(printf -- '%s\n' "$1" | sed -E 's/^.*\.//; s/./\L&/g')
 
-        if [ -f "${XDG_CONFIG_HOME}/lunch/extension/${extension}" ]; then
+        if [ -f "${XDG_CONFIG_HOME}/lunch/extension/${extension}" ] \
+           && [ -x "${XDG_CONFIG_HOME}/lunch/extension/${extension}" ]; then
+           "${XDG_CONFIG_HOME}/lunch/extension/${extension}" "$1"
+           handled=true
+        elif [ -f "${XDG_CONFIG_HOME}/lunch/extension/${extension}" ]; then
             run "$(cat "${XDG_CONFIG_HOME}/lunch/extension/${extension}")" "$1"
+            handled=true
         else
             unknown_type="extension"
             unknown_value="${extension}"
@@ -51,8 +58,13 @@ protocol() {
         # Ensure all protocols are lowercase.
         protocol=$(printf -- '%s\n' "$1" | sed 's#:.*##; s/\./\L&/')
 
-        if [ -f "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}" ]; then
+        if [ -f "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}" ] \
+           && [ -x "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}" ]; then
+           "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}" "$1"
+            handled=true
+        elif [ -f "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}" ]; then
             run "$(cat "${XDG_CONFIG_HOME}/lunch/protocol/${protocol}")" "$1"
+            handled=true
         else
             unknown_type="protocol"
             unknown_value="${protocol}"
@@ -78,15 +90,28 @@ mime() {
         parent="${mime%%/*}"
         child="${mime#*/}"
 
-        if [ -f "${XDG_CONFIG_HOME}/lunch/mime/${parent}/${child}" ]; then
-            run "$(cat "${XDG_CONFIG_HOME}/lunch/mime/${parent}/${child}")" "$1"
-        elif [ -f "${XDG_CONFIG_HOME}/lunch/mime/${parent}" ]; then
-            run "$(cat "${XDG_CONFIG_HOME}/lunch/mime/${parent}")" "$1"
-        else
+        # Executable handlers.
+        for f in \
+            "${XDG_CONFIG_HOME}/lunch/mime/${parent}/${child}" \
+            "${XDG_CONFIG_HOME}/lunch/mime/${parent}/\*" \
+            "${XDG_CONFIG_HOME}/lunch/mime/${parent}"; do
+            if [ -f "${f}" ] && [ -x "${f}" ]; then
+                "${f}" "$1"
+                handled=true
+                break
+            elif [ -f "${f}" ]; then
+                run "$(cat "${f}")" "$1"
+                handled=true
+                break
+            fi
+        done
+
+        if [ "${handled}" = false ]; then
             unknown_type="mime"
             unknown_value="${mime}"
             return 127
         fi
+
         shift
     done
 }
@@ -168,17 +193,9 @@ shift $(( OPTIND - 1 ))
 
 while [ $# -gt 0 ]; do
     [ -d "$1" ] && mime "$1" && shift && continue
-    case "$1" in
-        mailto:*|*://*)
-            protocol "$1" && shift && continue
-            ;;
-        *.*)
-            extension "$1" && shift && continue
-            ;;
-        *)
-            mime "$1" && shift && continue
-            ;;
-    esac
+    protocol "$1" && shift && continue
+    extension "$1" && shift && continue
+    mime "$1" && shift && continue
 
     if [ -x "${XDG_CONFIG_HOME}"/lunch/unknown ] \
         && ! "${XDG_CONFIG_HOME}"/lunch/unknown "${1}" "${unknown_type}" "${unknown_value}"; then
