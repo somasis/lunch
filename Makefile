@@ -1,5 +1,5 @@
 name = lunch
-version = 20200917
+version = 20210120
 
 prefix ?= /usr/local
 bindir ?= ${prefix}/bin
