@@ -91,10 +91,10 @@ mime() {
 usage() {
     cat >&2 <<EOF
 usage:
-       ${0##*/} FILE...
-       ${0##*/} URL...
+       ${0##*/} FILE... | URL...
        ${0##*/} [-l | -s]
-       ${0##*/} [-g PREFERENCE | -o PREFERENCE] ARGUMENTS...
+       ${0##*/} -g PREFERENCE [ARGUMENTS...]
+       ${0##*/} -o PREFERENCE [ARGUMENTS....]
 EOF
     die 64 # EX_USAGE
 }

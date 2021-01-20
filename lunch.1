@@ -1,4 +1,4 @@
-.Dd November 29, 2020
+.Dd January 19, 2021
 .Dt LUNCH 1
 .Os
 .
@@ -14,8 +14,12 @@
 .Op Fl l | s
 .
 .Nm
-.Op Fl g Ar PREFERENCE | Fl o Ar PREFERENCE
-.Op Ar ARGUMENTS
+.Fl g Ar PREFERENCE
+.Op Ar ARGUMENTS...
+.
+.Nm
+.Fl o Ar PREFERENCE
+.Op Ar ARGUMENTS...
 .
 .Sh DESCRIPTION
 .Nm
@@ -46,14 +50,18 @@ export PAGER="lunch -o pager"
 export TERMINAL="lunch -o terminal"
 .Ed
 .
-.It Fl g Ar PREFERENCE
+.It Fl g Ar PREFERENCE Op Ar ARGUMENTS...
 Get the command corresponding to the
 .Ar PREFERENCE
-in question.
-.It Fl o Ar PREFERENCE
+in question, including any
+.Op Ar ARGUMENTS
+passed.
+.It Fl o Ar PREFERENCE Op Ar ARGUMENTS...
 Open the application corresponding to the
 .Ar PREFERENCE
-in question.
+in question, with any
+.Op Ar ARGUMENTS
+passed.
 .It Pa FILE...
 The file to be opened.
 .Pp

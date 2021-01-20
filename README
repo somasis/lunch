@@ -6,7 +6,8 @@ NAME
 SYNOPSIS
      lunch FILE... | URL...
      lunch [-l | -s]
-     lunch [-g PREFERENCE | -o PREFERENCE] [ARGUMENTS...]
+     lunch -g PREFERENCE [ARGUMENTS...]
+     lunch -o PREFERENCE [ARGUMENTS...]
 
 DESCRIPTION
      lunch opens files and URLs according to the user's preferences for the
@@ -83,4 +84,4 @@ SEE ALSO
 AUTHORS
      Kylie McClain <kylie@somas.is>
 
-Linux 5.4.79-1-lts             November 29, 2020            Linux 5.4.79-1-lts
+Linux 5.4.84-1-lts             January 19, 2021             Linux 5.4.84-1-lts
