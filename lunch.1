@@ -34,7 +34,8 @@ mechanisms for declaring preferences.
 .
 .Pp
 Configuration is laid out in a simple and easily understood manner, as
-an explicit goal. No
+an explicit goal.
+No
 .Pa *.desktop
 files declaring MIME types they support, just commands and user-driven
 selection of them.
@@ -75,6 +76,8 @@ The file to be opened.
 .
 .It Pa URL...
 The URL to be opened.
+.
+.El
 .
 .Ss Handlers
 In
@@ -174,9 +177,10 @@ The catch-all handler, which if it exists, is located at
 .Pa $XDG_CONFIG_HOME/lunch/catch-all .
 .
 .Pp
-The catch-all handler is special. It is only allowed to be an executable
-handler. Furthermore, it receives not only the file name, but also the
-last handler types checked, and the handler that was checked for.
+The catch-all handler is special.
+It is only allowed to be an executable handler.
+Furthermore, it receives not only the file name, but also the last
+handler types checked, and the handler that was checked for.
 .
 .Pp
 For example, with a PDF file named

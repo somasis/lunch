@@ -11,12 +11,17 @@ SYNOPSIS
 
 DESCRIPTION
      lunch opens files and URLs according to the user's preferences for the
-     what should open the given file type or URL type.  It aims to provide a
-     way of setting a user's preferred applications that works with common
-     environment variables such as BROWSER, PAGER and so on, rather than as a
-     second system on top of these common mechanisms for declaring
-     preferences.  Configuration is laid out in a simple and easily understood
-     manner, as an explicit goal.
+     what should open the given file type or URL type.
+
+     It aims to provide a way of setting a user's preferred applications that
+     works with common environment variables such as BROWSER, PAGER and so on,
+     rather than as a second system on top of these common mechanisms for
+     declaring preferences.
+
+     Configuration is laid out in a simple and easily understood manner, as an
+     explicit goal.  No *.desktop files declaring MIME types they support,
+     just commands and user-driven selection of them.  Default handlers are
+     eschewed in favor delegating all choices to the user.
 
      The options are as follows:
 
@@ -42,46 +47,117 @@ DESCRIPTION
      FILE...
              The file to be opened.
 
-             To determine what should be used to open the file, lunch works in
-             the following order:
+     URL...  The URL to be opened.
 
-             1.   The extension of the file is checked against any extension-
-                  based rules.  If any match, that rule is used.  See Rules
-                  for details.
+   Handlers
+     In lunch, handlers are the most important part of configuration.
+     Handlers determine how extensions, MIME types, protocols, etc. are are to
+     be opened by programs.
 
-             2.   The MIME type of the file is checked, using file(1).  If it
-                  matches any MIME-based rules (again, see Rules), it will use
-                  that rule.
+     In an attempt to simplify configuration and allow for more flexibility,
+     lunch is configured through a file hierarchy, rather than a single file.
 
-     URL...  The URL to be opened.  To determine what should be used to open
-             the file, lunch checks against protocol-based rules (see Rules).
+     There's various types of handlers:
 
-   Rules
-     In lunch, rules are the most important part of configuration.  Rules
-     determine what extensions, MIME types, protocols, etc. are opened are
-     opened by what programs.
+     •   Executable files (executable handlers).
 
-     In an attempt to simplify configuration and allow for more flexibility
-     and delegation to preferences that can handle many types of input, lunch
-     is configured through a directory and file structure, rather than a
-     single configuration file.
+     •   Text files containing a command to execute (or, static handlers).
 
-     TODO
+     •   Symbolic links (which can be of either of the aforementioned types).
 
-ENVIRONMENT
-     BROWSER     The default web browser.
+     •   The catch-all handler, of which there may only be one.
 
-     EDITOR      The default text editor.
+     When a FILE or URL is passed to lunch, the protocol, extension, or MIME
+     type handlers are checked in this order:
 
-     PAGER       The default text pager.
+     1.  Protocol handlers, located in $XDG_CONFIG_HOME/lunch/protocol/*.
+
+         For example, given an https:// URL, the existence of
+         $XDG_CONFIG_HOME/lunch/protocol/https is checked for.  If it exists,
+         that handler is passed the URL.
+
+     2.  Extension handlers, located in $XDG_CONFIG_HOME/lunch/extension/*.
+
+         For example, given a FILE named document.pdf, the existence of
+         $XDG_CONFIG_HOME/lunch/extension/pdf is checked for.  If it exists,
+         that handler is passed the FILE.
+
+     3.  MIME type handlers, located in $XDG_CONFIG_HOME/lunch/mime/*.
+
+         For example, given a FILE named document.html, lunch checks for:
+
+         1.  $XDG_CONFIG_HOME/lunch/mime/text,
+
+         2.  $XDG_CONFIG_HOME/lunch/mime/text/html, and
+
+         3.  $XDG_CONFIG_HOME/lunch/mime/text/* (literal asterisk).
+
+         Once one of these handlers are found to exist, the search stops, and
+         the handler is passed the FILE.
+
+     4.  The catch-all handler, which if it exists, is located at
+         $XDG_CONFIG_HOME/lunch/catch-all.
+
+         The catch-all handler is special.  It is only allowed to be an
+         executable handler.  Furthermore, it receives not only the file name,
+         but also the last handler types checked, and the handler that was
+         checked for.
+
+         For example, with a PDF file named document.pdf, MIME type
+         application/pdf, the catch-all handler is executed like so:
+
+         $ $XDG_CONFIG_HOME/lunch/catch-all document.pdf mime application/pdf
+
+         If it exits with a non-zero status, or the catch-all does not exist,
+         that's considered a fatal error, and lunch dies without opening
+         anything else.
+
+         See EXAMPLES for some ideas on using this functionality.
+
+EXAMPLES
+   Catch-all handler usage
+     The catch-all handler is meant to be generic and not prescribe anything
+     about if a catch-all being activated is a failure state or not.  As such,
+     this means that it can be both used as an error reporting mechanism, or
+     as an opener for when there's no matching handler.
+
+     Loudly reporting errors is useful when configuring lunch.  If you have a
+     graphical program that runs lunch when opening things, desktop
+     notifications are of more use than errors on standard error.
+
+     So a catch-all like,
+
+     #!/bin/sh
+
+     notify-send -u critical "lunch" "No handler exists for '$1' ($2: '$3')"
+     exit 96
+
+     is not a terrible way of doing that.  You could also use the syslog, with
+     a similar script, but calling logger(1) instead.
+
+     Another usecase could be passing it to another opener, maybe xdg-open(1)
+     itself; however, I would recommend against that, personally.
+
+   Terminal programs
+     terminal(1) aims to provide a useful function no other application
+     preference utility seems to provide: spawning a terminal program in a new
+     terminal only when necessary.
+
+     This means that you can, for example, have EDITOR set to “terminal vi”,
+     and when a file is opened from a GUI file manager using your EDITOR as a
+     handler, vi(1) will appear in a new terminal window, editing that file.
+     And, when ran from within a terminal, it will just run vi(1) like you
+     never even ran it with terminal(1).
+
+     Unlike xdg-open(1) and its “Terminal=true” way of setting programs that
+     should be ran in a terminal, this method works really well in a mixed
+     workflow that includes GUIs and console-based programs since it is aware
+     of it is ran from a terminal or not.
 
 SEE ALSO
      exo-open(1), terminal(1), xdg-open(1)
 
-     Daniel Bernstein, The envdir program,
-     https://cr.yp.to/daemontools/envdir.html, March 05, 2000.
-
 AUTHORS
      Kylie McClain <kylie@somas.is>
 
-Linux 5.4.84-1-lts             January 20, 2021             Linux 5.4.84-1-lts
+Linux 5.4.84-1-lts             January 21, 2021             Linux 5.4.84-1-lts
