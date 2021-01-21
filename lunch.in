@@ -215,7 +215,9 @@ while [ $# -gt 0 ]; do
     extension "$1" && shift && continue
     mime "$1" && shift && continue
 
-    if [ -x "${XDG_CONFIG_HOME}"/lunch/unknown ] \
+    if ! [ -e "${XDG_CONFIG_HOME}"/lunch/unknown ]; then
+        die 95 "not sure how to handle '${1}' (${unknown_type}: '${unknown_value}')" # ENOTSUP
+    elif [ -x "${XDG_CONFIG_HOME}"/lunch/unknown ] \
         && ! "${XDG_CONFIG_HOME}"/lunch/unknown "${1}" "${unknown_type}" "${unknown_value}"; then
         die 95 "not sure how to handle '${1}' (${unknown_type}: '${unknown_value}')" # ENOTSUP
     fi
