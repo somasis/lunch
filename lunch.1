@@ -1,4 +1,4 @@
-.Dd January 20, 2021
+.Dd January 21, 2021
 .Dt LUNCH 1
 .Os
 .
@@ -25,13 +25,21 @@
 .Nm
 opens files and URLs according to the user's preferences for the what
 should open the given file type or URL type.
+.Pp
 It aims to provide a way of setting a user's preferred applications that
 works with common environment variables such as
 .Ev BROWSER , PAGER
 and so on, rather than as a second system on top of these common
 mechanisms for declaring preferences.
+.
+.Pp
 Configuration is laid out in a simple and easily understood manner, as
-an explicit goal.
+an explicit goal. No
+.Pa *.desktop
+files declaring MIME types they support, just commands and user-driven
+selection of them.
+Default handlers are eschewed in favor delegating all choices to the
+user.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -64,66 +72,198 @@ in question, with any
 passed.
 .It Pa FILE...
 The file to be opened.
-.Pp
-To determine what should be used to open the file,
-.Nm
-works in the following order:
-.Bl -enum
-.It
-The extension of the file is checked against any extension-based rules.
-If any match, that rule is used.
-See
-.Sx Rules
-for details.
-.It
-The MIME type of the file is checked, using
-.Xr file 1 .
-If it matches any MIME-based rules (again, see
-.Sx Rules ) ,
-it will use that rule.
-.El
+.
 .It Pa URL...
 The URL to be opened.
-To determine what should be used to open the file,
-.Nm
-checks against protocol-based rules (see
-.Sx Rules ) .
-.El
 .
-.Ss Rules
+.Ss Handlers
 In
 .Nm ,
-rules are the most important part of configuration.
-Rules determine what extensions, MIME types, protocols, etc. are
-opened are opened by what programs.
+handlers are the most important part of configuration.
+Handlers determine how extensions, MIME types, protocols, etc. are
+are to be opened by programs.
 .Pp
-In an attempt to simplify configuration and allow for more flexibility
-and delegation to preferences that can handle many types of input,
+In an attempt to simplify configuration and allow for more flexibility,
 .Nm
-is configured through a directory and file structure, rather than a
-single configuration file.
+is configured through a file hierarchy, rather than a single file.
 .
 .Pp
-TODO
+There's various types of handlers:
 .
-.Sh ENVIRONMENT
-.Bl -tag -width 10n
-.It Ev BROWSER
-The default web browser.
-.It Ev EDITOR
-The default text editor.
-.It Ev PAGER
-The default text pager.
+.Bl -bullet -width 6d
+.It
+Executable files
+.Em ( executable handlers ) .
+.
+.It
+Text files containing a command to execute (or,
+.Em static handlers ) .
+.
+.It
+Symbolic links (which can be of either of the aforementioned types).
+.
+.It
+The catch-all handler, of which there may only be one.
 .El
+.
+.Pp
+When a
+.Ar FILE
+or
+.Ar URL
+is passed to
+.Nm ,
+the protocol, extension, or MIME type handlers are checked in this order:
+.
+.Bl -enum -width 6d
+.It
+Protocol handlers, located in
+.Pa $XDG_CONFIG_HOME/lunch/protocol/* .
+.Pp
+For example, given an
+.Sy https://
+.Ar URL ,
+the existence of
+.Pa $XDG_CONFIG_HOME/lunch/protocol/https
+is checked for.
+If it exists, that handler is passed the
+.Ar URL .
+.
+.It
+Extension handlers, located in
+.Pa $XDG_CONFIG_HOME/lunch/extension/* .
+.Pp
+For example, given a
+.Ar FILE
+named
+.Pa document.pdf ,
+the existence of
+.Pa $XDG_CONFIG_HOME/lunch/extension/pdf
+is checked for.
+If it exists, that handler is passed the
+.Ar FILE .
+.
+.It
+MIME type handlers, located in
+.Pa $XDG_CONFIG_HOME/lunch/mime/* .
+.
+.Pp
+For example, given a
+.Ar FILE
+named
+.Pa document.html ,
+.Nm
+checks for:
+.Bl -enum -width 6d
+.It
+.Pa $XDG_CONFIG_HOME/lunch/mime/text ,
+.It
+.Pa $XDG_CONFIG_HOME/lunch/mime/text/html ,
+and
+.It
+.Pa $XDG_CONFIG_HOME/lunch/mime/text/*
+(literal asterisk).
+.El
+.Pp
+Once one of these handlers are found to exist, the search stops, and
+the handler is passed the
+.Ar FILE .
+.
+.It
+The catch-all handler, which if it exists, is located at
+.Pa $XDG_CONFIG_HOME/lunch/catch-all .
+.
+.Pp
+The catch-all handler is special. It is only allowed to be an executable
+handler. Furthermore, it receives not only the file name, but also the
+last handler types checked, and the handler that was checked for.
+.
+.Pp
+For example, with a PDF file named
+.Pa document.pdf ,
+MIME type
+.Em application/pdf ,
+the catch-all handler is executed like so:
+.Bd -literal
+$ $XDG_CONFIG_HOME/lunch/catch-all document.pdf mime application/pdf
+.Ed
+.
+.Pp
+If it exits with a non-zero status, or the catch-all does not exist,
+that's considered a fatal error, and
+.Nm
+dies without opening anything else.
+.Pp
+See
+.Sx EXAMPLES
+for some ideas on using this functionality.
+.El
+.
+.Sh EXAMPLES
+.Ss Catch-all handler usage
+The catch-all handler is meant to be generic and not prescribe anything
+about if a catch-all being activated is a failure state or not.
+As such, this means that it can be both used as an error reporting
+mechanism, or as an opener for when there's no matching handler.
+.Pp
+Loudly reporting errors is useful when configuring
+.Nm .
+If you have a graphical program that runs
+.Nm
+when opening things, desktop notifications are of more use than errors
+on standard error.
+.Pp
+So a catch-all like,
+.Bd -literal
+#!/bin/sh
+
+notify-send -u critical "lunch" "No handler exists for '$1' ($2: '$3')"
+exit 96
+.Ed
+.Pp
+is not a terrible way of doing that.
+You could also use the syslog, with a similar script, but calling
+.Xr logger 1
+instead.
+.
+.Pp
+Another usecase could be passing it to another opener, maybe
+.Xr xdg-open 1
+itself; however, I would recommend against that, personally.
+.
+.Ss Terminal programs
+.Xr terminal 1
+aims to provide a useful function no other application preference
+utility seems to provide: spawning a terminal program in a new terminal
+only when necessary.
+.Pp
+This means that you can, for example, have
+.Ev EDITOR
+set to
+.Dq terminal vi ,
+and when a file is opened from a GUI file manager using your EDITOR as
+a handler,
+.Xr vi 1
+will appear in a new terminal window, editing that file.
+And, when ran from within a terminal, it will just run
+.Xr vi 1
+like you never even ran it with
+.Xr terminal 1 .
+.Pp
+Unlike
+.Xr xdg-open 1
+and its
+.Dq Terminal=true
+way of setting programs that should be ran in a terminal, this method
+works really well in a mixed workflow that includes GUIs and
+console-based programs since it is aware of it is ran from a terminal or
+not.
+.
+.
 .Sh SEE ALSO
 .Xr exo-open 1 ,
 .Xr terminal 1 ,
 .Xr xdg-open 1
-.Rs
-.%A Daniel Bernstein
-.%T The envdir program
-.%D March 05, 2000
-.%U https://cr.yp.to/daemontools/envdir.html
-.Re
+.
 .Sh AUTHORS
 .An Kylie McClain Aq Mt kylie@somas.is
