@@ -8,7 +8,6 @@
 .
 .Sh SYNOPSIS
 .Nm
-.Op Fl -working-directory Ar DIRECTORY
 .Ar FILE... | URL...
 .
 .Nm
@@ -32,11 +31,11 @@ The options are as follows:
 Change to the
 .Ar DIRECTORY
 given before opening the
-.Ar FILE ,
-.Ar URL ,
-or
 .Ar CATEGORY
 given.
+Only has effect when
+.Fl -launch Ar CATEGORY Op Ar PARAMTERS
+is used.
 .
 .It Fl -launch Ar CATEGORY Op Ar PARAMETERS
 Launch the
@@ -65,30 +64,11 @@ Here's how they translate:
 .It WebBrowser Ta browser
 .El
 .
-.It Op Ar FILE... | URL...
+.It Ar FILE... , URL...
 These are passed to
 .Xr lunch 1
 indiscriminately, so see that page for details.
-.
 .El
-.Sh COMPATIBILITY
-The Xfce project's
-.Nm
-specifies in its help text that
-.Fl -working-directory Ar DIRECTORY
-is used to set the
-.Do
-default working directory for applications when using the
-.Fl -launch
-command
-.Dc
-However, it actually functions regardless of if
-.Fl -launch
-is passed or not in the Xfce project's version.
-.
-As such, it was chosen to emulate that behavior regardless of if it's a
-bug or not.
-.
 .Sh SEE ALSO
 .Xr lunch 1
 .Sh AUTHORS
