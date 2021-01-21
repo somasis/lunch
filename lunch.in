@@ -148,7 +148,7 @@ EOF
 # List preferences.
 prefs() (
     cd "${XDG_CONFIG_HOME}"/lunch || die 66 "configuration directory does not exist"
-    find ./ -maxdepth 1 -not -type d | sed 's|.\/||' | tr '[:upper:]' '[:lower:]' \
+    find ./ -maxdepth 1 -not -type d -not -name '*-*' | sed 's|.\/||' | tr '[:upper:]' '[:lower:]' \
         | sort -ud \
         || die 66 "failed to get list of preferences" # EX_NOINPUT
 )
@@ -215,10 +215,10 @@ while [ $# -gt 0 ]; do
     extension "$1" && shift && continue
     mime "$1" && shift && continue
 
-    if ! [ -e "${XDG_CONFIG_HOME}"/lunch/unknown ]; then
+    if ! [ -e "${XDG_CONFIG_HOME}"/lunch/catch-all ]; then
         die 95 "not sure how to handle '${1}' (${unknown_type}: '${unknown_value}')" # ENOTSUP
-    elif [ -x "${XDG_CONFIG_HOME}"/lunch/unknown ] \
-        && ! "${XDG_CONFIG_HOME}"/lunch/unknown "${1}" "${unknown_type}" "${unknown_value}"; then
+    elif [ -x "${XDG_CONFIG_HOME}"/lunch/catch-all ] \
+        && ! "${XDG_CONFIG_HOME}"/lunch/catch-all "${1}" "${unknown_type}" "${unknown_value}"; then
         die 95 "not sure how to handle '${1}' (${unknown_type}: '${unknown_value}')" # ENOTSUP
     fi
     shift
