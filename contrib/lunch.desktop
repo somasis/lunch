@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=lunch
+Comment=Default application launcher
+Categories=Utility;
+Exec=lunch %U
+NoDisplay=true
