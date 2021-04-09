@@ -33,8 +33,15 @@ set -u
 
 : "${XDG_CONFIG_HOME:=${HOME}/.config}"
 
-warn() {
-    printf -- 'warning: %s\n' "$@" >&2
+usage() {
+    cat >&2 <<EOF
+usage:
+       ${0##*/} FILE... | URL...
+       ${0##*/} [-l | -s]
+       ${0##*/} -g PREFERENCE [ARGUMENTS...]
+       ${0##*/} -o PREFERENCE [ARGUMENTS....]
+EOF
+    die 64 # EX_USAGE
 }
 
 die() {
@@ -57,8 +64,6 @@ run() {
         *) ${value} "$@" ;;
     esac
 }
-
-handled=false
 
 extension() {
     while [ $# -gt 0 ]; do
@@ -144,17 +149,6 @@ mime() {
     done
 }
 
-usage() {
-    cat >&2 <<EOF
-usage:
-       ${0##*/} FILE... | URL...
-       ${0##*/} [-l | -s]
-       ${0##*/} -g PREFERENCE [ARGUMENTS...]
-       ${0##*/} -o PREFERENCE [ARGUMENTS....]
-EOF
-    die 64 # EX_USAGE
-}
-
 # List preferences.
 prefs() (
     cd "${XDG_CONFIG_HOME}"/lunch || die 66 "configuration directory does not exist"
@@ -184,6 +178,8 @@ replace() {
         *) printf -- "%s %s\n" "${replace}" "$@" ;;
     esac | sed 's/ *$//'
 }
+
+handled=false
 
 while getopts :g:lo:s arg >/dev/null 2>&1; do
     case "${arg}" in
